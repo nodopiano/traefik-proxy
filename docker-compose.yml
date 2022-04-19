@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  whoami:
+    # A container that exposes an API to show its IP address
+    image: traefik/whoami
+    labels:
+      - traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)
+      - traefik.enable=true
+  reverse-proxy:
+    # The official v2 Traefik docker image
+    image: traefik:v2.6
+    labels:
+    - "traefik.http.routers.traefik=true"
+    restart: unless-stopped
+    networks:
+    - proxy
+    command:
+      - --accesslog
+      - --api.insecure=true
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      # So that Traefik can listen to the Docker events
+     - ./config/static.yml:/etc/traefik/traefik.yml:ro
+     - ./config/dynamic.yml:/etc/traefik/dynamic.yml:ro
+     - ./certs:/etc/certs:ro
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+
+networks:
+  proxy:
+    external: true

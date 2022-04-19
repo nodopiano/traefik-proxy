@@ -1,0 +1,27 @@
+http:
+  routers:
+    traefik:
+      rule: "Host(`traefik.docker.localhost`)"
+      service: "api@internal"
+      tls:
+        domains:
+          - main: "docker.localhost"
+            sans:
+              - "*.docker.localhost"
+          - main: "mailhog.localhost"
+            sans:
+              - "*.mailhog.localhost"
+          - main: "mysql.localhost"
+            sans:
+              - "*.mysql.localhost"
+          - main: "wp.localhost"
+            sans:
+              - "*.wp.localhost"
+          - main: "docker.local"
+            sans:
+              - "*.docker.local"
+
+tls:
+  certificates:
+    - certFile: "/etc/certs/local-cert.pem"
+      keyFile: "/etc/certs/local-key.pem"
