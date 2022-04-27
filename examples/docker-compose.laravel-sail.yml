@@ -1,0 +1,103 @@
+# For more information: https://laravel.com/docs/sail
+version: '3'
+services:
+  laravel.test:
+    build:
+      context: ./vendor/laravel/sail/runtimes/7.4
+      dockerfile: Dockerfile
+      args:
+        WWWGROUP: '${WWWGROUP}'
+    image: sail-7.4/app
+    environment:
+      WWWUSER: '${WWWUSER}'
+      LARAVEL_SAIL: 1
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.$APPNAME.rule=Host(`$APPNAME.app.test`)
+      - traefik.http.services.$APPNAME.loadbalancer.server.port=80
+      - traefik.http.routers.$APPNAME.tls=true
+      - traefik.docker.network=proxy
+    volumes:
+      - '.:/var/www/html'
+    networks:
+      - sail
+      - proxy
+    depends_on:
+      - mysql
+      # - pgsql
+      - redis
+      # - selenium
+    extra_hosts: # <-- this is required
+      - 'host.docker.internal:host-gateway' # <-- this is required
+  # selenium:
+  #     image: 'selenium/standalone-chrome'
+  #     volumes:
+  #         - '/dev/shm:/dev/shm'
+  #     networks:
+  #         - sail
+  mysql:
+    image: 'mysql:8'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+    volumes:
+      - 'sailmysql:/var/lib/mysql'
+    networks:
+      - sail
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping']
+  #    pgsql:
+  #        image: postgres:13
+  #        ports:
+  #            - '${FORWARD_DB_PORT:-5432}:5432'
+  #        environment:
+  #            PGPASSWORD: '${DB_PASSWORD:-secret}'
+  #            POSTGRES_DB: '${DB_DATABASE}'
+  #            POSTGRES_USER: '${DB_USERNAME}'
+  #            POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
+  #        volumes:
+  #            - 'sailpostgresql:/var/lib/postgresql/data'
+  #        networks:
+  #            - sail
+  #        healthcheck:
+  #          test: ["CMD", "pg_isready", "-q", "-d", "${DB_DATABASE}", "-U", "${DB_USERNAME}"]
+  redis:
+    image: 'redis:alpine'
+    volumes:
+      - 'sailredis:/data'
+    networks:
+      - sail
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+  # memcached:
+  #     image: 'memcached:alpine'
+  #     ports:
+  #         - '11211:11211'
+  #     networks:
+  #         - sail
+  mailhog:
+    image: 'mailhog/mailhog:latest'
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.services.$APPNAME-mailhog.loadbalancer.server.port=8025
+      - traefik.http.routers.$APPNAME-mailhog.rule=Host(`$APPNAME.mailhog.test`)
+      - traefik.http.routers.$APPNAME-mailhog.tls=true
+    networks:
+      - sail
+      - proxy
+networks:
+  sail:
+    driver: bridge
+  proxy:
+    external: true
+volumes:
+  sailmysql:
+    driver: local
+  #    sailpostgresql:
+  #        driver: local
+  sailredis:
+    driver: local

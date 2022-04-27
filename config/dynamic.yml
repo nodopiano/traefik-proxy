@@ -8,18 +8,24 @@ http:
           - main: "docker.localhost"
             sans:
               - "*.docker.localhost"
-          - main: "mailhog.localhost"
+          - main: "app.test"
             sans:
-              - "*.mailhog.localhost"
-          - main: "mysql.localhost"
+              - "*.app.test"
+          - main: "mailhog.test"
             sans:
-              - "*.mysql.localhost"
-          - main: "wp.localhost"
+              - "*.mailhog.test"
+          - main: "redis.test"
             sans:
-              - "*.wp.localhost"
-          - main: "docker.local"
+              - "*.redis.test"
+          - main: "mysql.test"
             sans:
-              - "*.docker.local"
+              - "*.mysql.test"
+          - main: "wp.test"
+            sans:
+              - "*.wp.test"
+          - main: "localhost"
+            sans:
+              - "*.localhost"
 
 tls:
   certificates:
